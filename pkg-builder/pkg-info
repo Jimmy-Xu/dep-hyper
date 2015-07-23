@@ -1,0 +1,4 @@
+# package information.
+MAINTAINER ?= Jimmy Xu <xjimmyshcn@gmail.com>
+SUMMARY ?= Hypervisor - agnostic Docker Engine_
+URL ?= https://hyper.sh/

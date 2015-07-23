@@ -1,0 +1,11 @@
+*.log
+log
+
+dist/*.tgz
+dist/*.md5
+
+pkg-builder/dist/
+pkg-builder/debbuild
+pkg-builder/rpmbuild
+pkg-builder/*.deb
+pkg-builder/*.rpm

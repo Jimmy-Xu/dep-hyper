@@ -1,0 +1,101 @@
+#!/bin/bash
+set -e
+
+### BEGIN INIT INFO
+# Provides:           hyperd
+# Required-Start:     $syslog $remote_fs
+# Required-Stop:      $syslog $remote_fs
+# Should-Start:
+# Should-Stop:
+# Default-Start:      2 3 4 5
+# Default-Stop:       0 1 6
+# Short-Description:  hyperd daemon for hyper.sh
+# Description:
+### END INIT INFO
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+BASE=$(basename $0)
+
+HYPERD=/usr/local/bin/$BASE
+# This pid file is managed by start-stop-daemon
+HYPERD_SSD_PIDFILE=/var/run/$BASE-ssd.pid
+HYPERD_LOGFILE=/var/log/$BASE.log
+HYPERD_DESC="hyperd"
+
+# Get lsb functions
+. /lib/lsb/init-functions
+
+if [ -f /etc/hyper/config ]; then
+    . /etc/hyper/config
+fi
+
+# Check hyperd is present
+if [ ! -x $HYPERD ]; then
+    log_failure_msg "$HYPERD not present or not executable"
+    exit 1
+fi
+
+fail_unless_root() {
+    if [ "$(id -u)" != '0' ]; then
+        log_failure_msg "$HYPERD_DESC must be run as root"
+        exit 1
+    fi
+}
+
+prestart() {
+    service docker status > /dev/null
+
+    if [[ $? != 0 ]]; then
+        service docker start
+    fi
+
+}
+
+case "$1" in
+    start)
+        fail_unless_root
+        prestart
+        touch "$HYPERD_LOGFILE"
+
+        log_begin_msg "Starting $HYPERD_DESC: $BASE"
+        start-stop-daemon --start --background \
+            --no-close \
+            --exec "$HYPERD" \
+            --pidfile "$HYPERD_SSD_PIDFILE" \
+            --make-pidfile \
+            -- \
+                    >> "$HYPERD_LOGFILE" 2>&1
+        log_end_msg $?
+        ;;
+
+    stop)
+        fail_unless_root
+        log_begin_msg "Stopping $HYPERD_DESC: $BASE"
+        start-stop-daemon --stop --pidfile "$HYPERD_SSD_PIDFILE"
+        log_end_msg $?
+        ;;
+
+    restart)
+        fail_unless_root
+        HYPERD_PID=`cat "$HYPERD_SSD_PIDFILE" 2>/dev/null`
+        [ -n "${HYPERD_PID}" ] \
+            && ps -p ${HYPERD_PID} > /dev/null 2>&1 \
+            && $0 stop
+        $0 start
+        ;;
+
+    force-reload)
+        fail_unless_root
+        $0 restart
+        ;;
+
+    status)
+        status_of_proc -p "$HYPERD_SSD_PIDFILE" "$HYPERD" "$HYPERD_DESC"
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
