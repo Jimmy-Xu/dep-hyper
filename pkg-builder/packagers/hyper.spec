@@ -8,7 +8,7 @@ URL: %{url}
 Packager: %{maintainer}
 BuildArch: %{architecture}
 BuildRoot: %{_tmppath}/%{name}.%{version}-buildroot
-Requires: qemu, fakeroot
+Requires: qemu-system-x86_64, fakeroot
 
 
 #set the algorithm explicitly to MD5SUM

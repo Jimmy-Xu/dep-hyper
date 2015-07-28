@@ -8,6 +8,7 @@ show_message "build deb" green
 PKG_BUILDER_DIR="${BASE_DIR}/../../pkg-builder"
 cd ${PKG_BUILDER_DIR}
 
+rm -rf *.deb
 make deb
 
 show_message "Done" green
